@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import make_response, abort
+from flask import abort
 
 
 def get_timestamp():
@@ -68,7 +68,7 @@ def create(person):
 
 	if lname not in PEOPLE and lname is not None:
 		add_to_people(person)
-		return make_response(f"{lname} successfully created")
+		return {"msg": f"{lname} successfully created"}, 201
 	else:
 		abort(406, f"Person with the last name {lname} already exists")
 
@@ -94,6 +94,6 @@ def delete(lname):
 	"""
 	if lname in PEOPLE:
 		del PEOPLE[lname]
-		return make_response(f"{lname} successfully deleted")
+		return {"msg": f"{lname} successfully deleted"}, 200
 	else:
 		abort(404, f"Person with last name {lname} not found")

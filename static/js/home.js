@@ -6,6 +6,16 @@
 // Create the namespace instance
 let ns = {};
 
+const attachAjax = function (eventPump, ajaxOtions, succesName, errorName) {
+    $.ajax(ajaxOtions)
+        .done(function (data) {
+            eventPump.trigger(succesName, [data]);
+        })
+        .fail(function (xhr, textStatus, errorThrown) {
+            eventPump.trigger(errorName, [xhr, textStatus, errorThrown]);
+        })
+};
+
 // Create the model instance
 ns.model = (function () {
     'use strict';
@@ -14,20 +24,14 @@ ns.model = (function () {
 
     // Return the API
     return {
-        'read': function () {
+        read: function () {
             let ajax_options = {
                 type: 'GET',
                 url: 'api/people',
                 accepts: 'application/json',
                 dataType: 'json'
             };
-            $.ajax(ajax_options)
-                .done(function (data) {
-                    $event_pump.trigger('model_read_success', [data]);
-                })
-                .fail(function (xhr, textStatus, errorThrown) {
-                    $event_pump.trigger('model_error', [xhr, textStatus, errorThrown]);
-                })
+            attachAjax($event_pump, ajax_options, 'model_read_success', 'model_error');
         },
         create: function (fname, lname) {
             let ajax_options = {
@@ -41,13 +45,7 @@ ns.model = (function () {
                     'lname': lname
                 })
             };
-            $.ajax(ajax_options)
-                .done(function (data) {
-                    $event_pump.trigger('model_create_success', [data]);
-                })
-                .fail(function (xhr, textStatus, errorThrown) {
-                    $event_pump.trigger('model_error', [xhr, textStatus, errorThrown]);
-                })
+            attachAjax($event_pump, ajax_options, 'model_create_success', 'model_error');
         },
         update: function (fname, lname) {
             let ajax_options = {
@@ -61,28 +59,16 @@ ns.model = (function () {
                     'lname': lname
                 })
             };
-            $.ajax(ajax_options)
-                .done(function (data) {
-                    $event_pump.trigger('model_update_success', [data]);
-                })
-                .fail(function (xhr, textStatus, errorThrown) {
-                    $event_pump.trigger('model_error', [xhr, textStatus, errorThrown]);
-                })
+            attachAjax($event_pump, ajax_options, 'model_update_success', 'model_error');
         },
-        'delete': function (lname) {
+        delete: function (lname) {
             let ajax_options = {
                 type: 'DELETE',
                 url: 'api/people/' + lname,
                 accepts: 'application/json',
                 contentType: 'plain/text'
             };
-            $.ajax(ajax_options)
-                .done(function (data) {
-                    $event_pump.trigger('model_delete_success', [data]);
-                })
-                .fail(function (xhr, textStatus, errorThrown) {
-                    $event_pump.trigger('model_error', [xhr, textStatus, errorThrown]);
-                })
+            attachAjax($event_pump, ajax_options, 'model_delete_success', 'model_error');
         }
     };
 }());
@@ -100,21 +86,26 @@ ns.view = (function () {
             $lname.val('');
             $fname.val('').focus();
         },
-        update_editor: function (fname, lname) {
+        updateEditor: function (fname, lname) {
             $lname.val(lname);
             $fname.val(fname).focus();
         },
-        build_table: function (people) {
-            let rows = ''
+        buildTable: function (people) {
+            let rows = '';
 
             // clear the table
             $('.people table > tbody').empty();
 
             // did we get a people array?
             if (people) {
-                for (let i = 0, l = people.length; i < l; i++) {
-                    rows += `<tr><td class="fname">${people[i].fname}</td><td class="lname">${people[i].lname}</td><td>${people[i].timestamp}</td></tr>`;
-                }
+                people.forEach(person => {
+                    rows +=
+                        `<tr>
+                            <td class="fname">${person.fname}</td>
+                            <td class="lname">${person.lname}</td>
+                            <td>${person.timestamp}</td>
+                        </tr>`;
+                });
                 $('table > tbody').append(rows);
             }
         },
@@ -142,7 +133,7 @@ ns.controller = (function (m, v) {
     // Get the data from the model after the controller is done initializing
     setTimeout(function () {
         model.read();
-    }, 100)
+    }, 100);
 
     // Validate input
     function validate(fname, lname) {
@@ -192,7 +183,7 @@ ns.controller = (function (m, v) {
 
     $('#reset').click(function () {
         view.reset();
-    })
+    });
 
     $('table > tbody').on('dblclick', 'tr', function (e) {
         let $target = $(e.target),
@@ -209,12 +200,12 @@ ns.controller = (function (m, v) {
             .find('td.lname')
             .text();
 
-        view.update_editor(fname, lname);
+        view.updateEditor(fname, lname);
     });
 
     // Handle the model events
     $event_pump.on('model_read_success', function (e, data) {
-        view.build_table(data);
+        view.buildTable(data);
         view.reset();
     });
 
@@ -231,7 +222,10 @@ ns.controller = (function (m, v) {
     });
 
     $event_pump.on('model_error', function (e, xhr, textStatus, errorThrown) {
-        let error_msg = textStatus + ': ' + errorThrown + ' - ' + xhr.responseJSON.detail;
+        if (xhr.responseJSON === undefined) {
+            xhr.responseJSON = 'undefined';
+        }
+        let error_msg = `${textStatus}: ${errorThrown} - ${xhr.responseJSON.detail}`;
         view.error(error_msg);
         console.log(error_msg);
     })
