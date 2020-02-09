@@ -13,14 +13,25 @@ basePath: "/api"
 paths:
   /people:
     get:
-      operationId: people.read
+      operationId: people.read_all
       tags:
         - people
-      summary: "The people data structure supported by the server application"
-      description: "Read the list of people"
+      summary: Read the entire list of people
+      description: Read the list of people
+      parameters:
+        - name: length
+          in: query
+          type: integer
+          description: Number of people to get from people
+          required: False
+        - name: offset
+          in: query
+          type: integer
+          description: Offset from beginning of list where to start gathering people
+          required: False
       responses:
         200:
-          description: "Successful read people list operation"
+          description: Successful read people list operation
           schema:
             type: array
             items:
@@ -31,3 +42,90 @@ paths:
                   type: string
                 timestamp:
                   type: string
+    post:
+      operationId: people.create
+      tags:
+        - people
+      summary: Create a person and add to the list
+      description: Create a person and add to the list
+      parameters:
+        - name: person
+          in: body
+          description: Person to create
+          required: True
+          schema:
+            type: object
+            properties:
+              fname:
+                type: string
+                description: First name of person to create
+              lname:
+                type: string
+                description: First name of person to create
+      responses:
+        201:
+          description: Successfully created people in list
+  /people/{lname}:
+    get:
+      operationId: people.read_one
+      tags:
+        - people
+      summary: Read one person from the list
+      description: Read one person from the list
+      parameters:
+        - name: lname
+          in: path
+          description: Last name of the person to get from the list
+          type: string
+          required: True
+      responses:
+        200:
+          description: Successfully read person from people list
+          schema:
+            properties:
+              fname:
+                type: string
+              lname:
+                type: string
+              timestamp:
+                type: string
+    put:
+      operationId: people.update
+      tags:
+        - people
+      summary: Update one person from the list
+      description: Update one person from the list
+      parameters:
+        - name: lname
+          in: path
+          description: Last name of the person to get from the list
+          type: string
+          required: True
+        - name: person
+          in: body
+          required: True
+          schema:
+            type: object
+            properties:
+              fname:
+                type: string
+              lname:
+                type: string
+      responses:
+        200:
+          description: Successfully updated person in the people list
+    delete:
+      operationId: people.delete
+      tags:
+        - people
+      summary: Delete one person from the list
+      description: Delete one person from the list
+      parameters:
+        - name: lname
+          in: path
+          description: Last name of the person to delete from the list
+          type: string
+          required: True
+      responses:
+        200:
+          description: Successfully deleted person in the people list

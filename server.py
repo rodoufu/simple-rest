@@ -8,8 +8,8 @@ app.add_api('swagger.yml')
 @app.route('/')
 def home():
 	"""
-This function just responds to the browser URL localhots:5000
-:return: The rendered template 'home.html'
+	This function just responds to the browser URL localhots:5000
+	:return: The rendered template 'home.html'
 	"""
 	return render_template('home.html')
 
